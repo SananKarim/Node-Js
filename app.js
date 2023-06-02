@@ -1,6 +1,15 @@
 const express = require("express");
-
+const mongoose = require("mongoose");
+const morgan = require("morgan");
+const blogRoutes = require("./routes/blogRoutes");
+const testRoutes = require("./routes/testRoute");
 const app = express();
+
+const dbURI = "mongodb+srv://sanan:1234@cluster0.a3ydmjf.mongodb.net/cluster0";
+mongoose
+  .connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then((result) => app.listen(3000))
+  .catch((err) => console.log(err));
 
 //register view engine.
 app.set("view engine", "ejs"); //This means that when rendering views, Express will use EJS as the template engine to process and generate HTML output.
@@ -12,28 +21,37 @@ app.set("view engine", "ejs"); //This means that when rendering views, Express w
 
 //listen for requests
 
-app.listen(3000); //no need to tell for localhost. It knows it. Also it return instance of a server.
+//app.listen(3000); //no need to tell for localhost. It knows it. Also it return instance of a server.
 //You wont be needing createServer anymore.
+
+app.use(express.static("public"));
+app.use(express.urlencoded({ extended: true })); //takes all the url encoded data and pass to an object that we use in request object. req.body brings all the inputs values into the object.
+app.use(morgan("dev"));
+
+app.use("/blogs", blogRoutes);
+
+app.use("/test", testRoutes);
+
+// app.get("/add-blog", (req, res) => {
+//   const blog = new Blog({
+//     title: "First Blog",
+//     snippet: "about my first blog",
+//     body: "bla bla bla",
+//   });
+//   blog
+//     .save()
+//     .then((result) => {
+//       res.send(result);
+//     })
+//     .catch((err) => {
+//       console.log(err);
+//     }); //when new instant  of sehcma is created the we have to save it in the dB which what this does. It save and send the object Document which is in the promise form. To resolve it we use then and send the results into the browser so that we can see that
+// });
 
 app.get("/", (req, res) => {
   // res.send("<p>Home Page</p>"); //respose code no need
   // res.sendFile("./views/index.html", { root: __dirname });
-  const blogs = [
-    {
-      title: "Yoshi finds eggs",
-      snippet: "Lorem ipsum dolor sit amet consectetur",
-    },
-    {
-      title: "Mario finds stars",
-      snippet: "Lorem ipsum dolor sit amet consectetur",
-    },
-    {
-      title: "How to defeat bowser",
-      snippet: "Lorem ipsum dolor sit amet consectetur",
-    },
-  ];
-
-  res.render("index", { title: "Home", blogs }); //ejs
+  res.redirect("blogs"); //ejs
 });
 
 // about page
@@ -46,10 +64,6 @@ app.get("/about", (req, res) => {
 // app.get("/about-me", (req, res) => {
 //   res.redirect("/about");
 // });
-
-app.get("/blog/create", (req, res) => {
-  res.render("create", { title: "Create Blog" });
-});
 
 //404 page. Remember this should be last. Express never know it is 404 page. due to which we have to tell its status code manaully.
 app.use((req, res) => {
